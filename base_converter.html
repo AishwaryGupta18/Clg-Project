@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: black;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+        }
+        h2 {
+            color: white;
+        }
+
+        label {
+            color: white;
+            display: block;
+            margin-top: 10px;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background-color: cyan;
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: lightblue;
+        }
+
+        #result { 
+            color: white;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Base Converter</h1>
+        <label for="number">Number:</label>
+        <input type="text" id="number" placeholder="Enter number (length <= 10)">
+
+        <label for="fromBase">From Base (2-36):</label>
+        <input type="number" id="fromBase" min="2" max="36" placeholder="From Base">
+
+        <label for="toBase">To Base (2-36):</label>
+        <input type="number" id="toBase" min="2" max="36" placeholder="To Base">
+
+        <button id="convertButton">Convert</button>
+        
+        <h2>Result:</h2>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function toDec(s, b) {
+            let ans = 0;
+            let isNegative = false;
+
+            // Check for negative sign
+            if (s[0] === '-') {
+                isNegative = true;
+                s = s.substring(1); // Remove the negative sign for processing
+            }
+
+            for (let i = 0; i < s.length; i++) {
+                let ch = s[i].toUpperCase(); // Convert to uppercase for uniformity
+                let val = -1;
+
+                if (ch >= '0' && ch <= '9') {
+                    val = ch.charCodeAt(0) - '0'.charCodeAt(0);
+                } else if (ch >= 'A' && ch <= 'Z') {
+                    val = ch.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+                }
+
+                if (val === -1 || val >= b) return -1; // Return -1 for invalid characters
+
+                ans = ans * b + val; // Update the answer
+            }
+
+            return isNegative ? -ans : ans; // Return negative if it was negative
+        }
+
+        function fromDec(n, b) {
+            if (n === 0) return "0"; // Handle zero case
+            let ans = "";
+            let isNegative = n < 0;
+
+            n = Math.abs(n); // Work with absolute value
+
+            while (n > 0) {
+                let val = n % b;
+                if (val < 10) {
+                    ans += String.fromCharCode(val + '0'.charCodeAt(0));
+                } else {
+                    ans += String.fromCharCode(val - 10 + 'A'.charCodeAt(0));
+                }
+                n = Math.floor(n / b);
+            }
+            return (isNegative ? '-' : '') + ans.split('').reverse().join(''); // Reverse and add negative sign if needed
+        }
+
+        function baseCheck(b1, b2) {
+            return b1 >= 2 && b1 <= 36 && b2 >= 2 && b2 <= 36;
+        }
+
+        function convert() {
+            const number = document.getElementById('number').value;
+            const fromBase = parseInt(document.getElementById('fromBase').value);
+            const toBase = parseInt(document.getElementById('toBase').value);
+            const resultDiv = document.getElementById('result');
+
+            // Clear previous results
+            resultDiv.innerHTML = '';
+
+            if (number.length > 10) {
+                resultDiv.innerHTML = "<span class='error'>Number length should be <= 10.</span>";
+                return;
+            }
+
+            if (!baseCheck(fromBase, toBase)) {
+                resultDiv.innerHTML = "<span class='error'>Please enter valid bases (2-36).</span>";
+                return;
+            }
+
+            const decimalValue = toDec(number, fromBase);
+            if (decimalValue === -1) {
+                resultDiv.innerHTML = "<span class='error'>Invalid number for the given base.</span>";
+                return;
+            }
+
+            const convertedValue = fromDec(decimalValue, toBase);
+            resultDiv.innerHTML = `Converted Value: ${convertedValue}`;
+        }
+
+        document.getElementById('convertButton').addEventListener('click', convert);
+    </script>
+</body>
+</html>

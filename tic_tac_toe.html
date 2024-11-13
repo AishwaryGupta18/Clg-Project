@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: black;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+        }
+     
+        label {
+            color: white;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            margin: 0 auto;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #fff;
+            transition: width 0.3s, height 0.3s; /* Smooth transition for resizing */
+        }
+
+        .cell {
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .cell.x {
+            color: #ff5733;
+        }
+
+        .cell.o {
+            color: #33c1ff;
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 24px;
+            color: white;
+        }
+
+        input[type="text"], input[type="number"] {
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: cyan;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div class="controls">
+        <label for="player1">Player 1 (X):</label>
+        <input type="text" id="player1" required>
+        <br>
+        <label for="player2">Player 2 (O):</label>
+        <input type="text" id="player2" required>
+        <br>
+        <label for="size">Board Size:</label>
+        <input type="number" id="size" value="3" min="3" max="10" required>
+        <button id="startGame">Start Game</button>
+    </div>
+    <div id="gameBoard" class="game-board"></div>
+    <div id="message"></div>
+    <script>
+        let board = [];
+        let currentPlayer = 'X';
+        let player1, player2;
+        let movesLeft;
+        let boardSize;
+        let rowCounts, colCounts, diag1Count, diag2Count;
+
+        document.getElementById('startGame').addEventListener('click', function() {
+            player1 = document.getElementById('player1').value || 'Player 1';
+            player2 = document.getElementById('player2').value || 'Player 2';
+            boardSize = parseInt(document.getElementById('size').value);
+            startGame();
+        });
+
+        function startGame() {
+            board = Array.from({ length: boardSize }, () => Array(boardSize).fill('')); // Initialize with empty strings
+            currentPlayer = 'X';
+            movesLeft = boardSize * boardSize; // Set moves left based on board size
+            rowCounts = Array(boardSize).fill(0);
+            colCounts = Array(boardSize).fill(0);
+            diag1Count = 0;
+            diag2Count = 0;
+            document.getElementById('message').textContent = '';
+            createBoard();
+        }
+
+        function createBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            gameBoard.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+            gameBoard.style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
+            gameBoard.style.width = `${boardSize * 100}px`; // Set width dynamically
+            gameBoard.style.height = `${boardSize * 100}px`; // Set height dynamically
+            
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.textContent = board[i][j] === 'X' ? '❌' : board[i][j] === 'O' ? '⭕' : '';
+                    
+                    if (board[i][j] === 'X') {
+                        cell.classList.add('x');
+                    } else if (board[i][j] === 'O') {
+                        cell.classList.add('o');
+                    }
+
+                    cell.addEventListener('click', handleCellClick);
+                    gameBoard.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(event) {
+            const row = event.target.dataset.row;
+            const col = event.target.dataset.col;
+
+            if (board[row][col] !== '' || movesLeft <= 0) {
+                return; // Invalid move
+            }
+
+            board[row][col] = currentPlayer;
+            movesLeft--;
+
+            // Update counts for rows, columns, and diagonals
+            if (currentPlayer === 'X') {
+                rowCounts[row]++;
+                colCounts[col]++;
+                if (row == col) diag1Count++;
+                if (col == boardSize-1-row) diag2Count++;
+            } else {
+                rowCounts[row]--;
+                colCounts[col]--;
+                if (row == col) diag1Count--;
+                if (col == boardSize-1-row) diag2Count--;
+            }
+
+            if (checkWin(row, col)) {
+                document.getElementById('message').textContent = `Winner: ${currentPlayer === 'X' ? player1 : player2}`;
+                return;
+            }
+
+            if (movesLeft === 0) {
+                document.getElementById('message').textContent = '--- Match Tied ---';
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            createBoard();
+        }
+
+        function checkWin(row, col) {
+            // Check row, column, and diagonals
+            if (rowCounts[row] === boardSize || colCounts[col] === boardSize || diag1Count === boardSize || diag2Count === boardSize ||
+                 rowCounts[row] === -boardSize || colCounts[col] === -boardSize || diag1Count ===
+                 -boardSize || diag2Count === -boardSize) {
+                 createBoard();
+                return true;
+            }
+            return false;
+        }
+    </script>
+</body>
+</html>
+    
